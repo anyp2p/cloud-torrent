@@ -4,7 +4,6 @@ go 1.21.0
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/anacrolix/dht v1.0.1
 	github.com/anacrolix/torrent v1.52.5
 	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/jpillora/archive v0.0.0-20160301031048-e0b3681851f1
@@ -85,15 +84,11 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529 // indirect
-	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
-	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce // indirect
-	github.com/willf/bitset v1.1.11 // indirect
-	github.com/willf/bloom v2.0.3+incompatible // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
 	go.opentelemetry.io/otel v1.17.0 // indirect
