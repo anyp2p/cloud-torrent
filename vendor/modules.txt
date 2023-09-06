@@ -1,0 +1,456 @@
+# crawshaw.io/sqlite v0.3.3-0.20220618202545-d1964889ea3c
+## explicit; go 1.12
+crawshaw.io/sqlite
+crawshaw.io/sqlite/c
+crawshaw.io/sqlite/sqlitex
+# github.com/NYTimes/gziphandler v1.1.1
+## explicit; go 1.11
+github.com/NYTimes/gziphandler
+# github.com/PuerkitoBio/goquery v1.8.1
+## explicit; go 1.13
+github.com/PuerkitoBio/goquery
+# github.com/RoaringBitmap/roaring v1.5.0
+## explicit; go 1.14
+github.com/RoaringBitmap/roaring
+github.com/RoaringBitmap/roaring/BitSliceIndexing
+github.com/RoaringBitmap/roaring/internal
+# github.com/ajwerner/btree v0.0.0-20211221152037-f427b3e689c0
+## explicit; go 1.18
+github.com/ajwerner/btree
+github.com/ajwerner/btree/internal/abstract
+# github.com/alecthomas/atomic v0.1.0-alpha2
+## explicit; go 1.18
+github.com/alecthomas/atomic
+# github.com/anacrolix/chansync v0.3.0
+## explicit; go 1.16
+github.com/anacrolix/chansync
+github.com/anacrolix/chansync/events
+# github.com/anacrolix/dht v1.0.1
+## explicit
+github.com/anacrolix/dht
+github.com/anacrolix/dht/krpc
+# github.com/anacrolix/dht/v2 v2.20.0
+## explicit; go 1.18
+github.com/anacrolix/dht/v2
+github.com/anacrolix/dht/v2/bep44
+github.com/anacrolix/dht/v2/containers
+github.com/anacrolix/dht/v2/int160
+github.com/anacrolix/dht/v2/k-nearest-nodes
+github.com/anacrolix/dht/v2/krpc
+github.com/anacrolix/dht/v2/peer-store
+github.com/anacrolix/dht/v2/transactions
+github.com/anacrolix/dht/v2/traversal
+github.com/anacrolix/dht/v2/types
+# github.com/anacrolix/envpprof v1.3.0
+## explicit; go 1.12
+github.com/anacrolix/envpprof
+# github.com/anacrolix/generics v0.0.0-20230816105729-c755655aee45
+## explicit; go 1.18
+github.com/anacrolix/generics
+# github.com/anacrolix/go-libutp v1.3.1
+## explicit; go 1.14
+github.com/anacrolix/go-libutp
+# github.com/anacrolix/log v0.14.2
+## explicit; go 1.18
+github.com/anacrolix/log
+# github.com/anacrolix/missinggo v1.3.0
+## explicit; go 1.16
+github.com/anacrolix/missinggo
+github.com/anacrolix/missinggo/conntrack
+github.com/anacrolix/missinggo/expect
+github.com/anacrolix/missinggo/httptoo
+github.com/anacrolix/missinggo/inproc
+github.com/anacrolix/missinggo/iter
+github.com/anacrolix/missinggo/mime
+github.com/anacrolix/missinggo/orderedmap
+github.com/anacrolix/missinggo/pproffd
+github.com/anacrolix/missinggo/slices
+# github.com/anacrolix/missinggo/perf v1.0.0
+## explicit; go 1.12
+github.com/anacrolix/missinggo/perf
+# github.com/anacrolix/missinggo/v2 v2.7.2
+## explicit; go 1.18
+github.com/anacrolix/missinggo/v2
+github.com/anacrolix/missinggo/v2/bitmap
+github.com/anacrolix/missinggo/v2/iter
+github.com/anacrolix/missinggo/v2/pproffd
+github.com/anacrolix/missinggo/v2/pubsub
+github.com/anacrolix/missinggo/v2/resource
+github.com/anacrolix/missinggo/v2/slices
+# github.com/anacrolix/mmsg v1.0.0
+## explicit
+github.com/anacrolix/mmsg
+github.com/anacrolix/mmsg/socket
+# github.com/anacrolix/multiless v0.3.1-0.20221221005021-2d12701f83f7
+## explicit; go 1.18
+github.com/anacrolix/multiless
+# github.com/anacrolix/stm v0.5.0
+## explicit; go 1.18
+github.com/anacrolix/stm
+github.com/anacrolix/stm/stmutil
+# github.com/anacrolix/sync v0.4.0
+## explicit; go 1.13
+github.com/anacrolix/sync
+# github.com/anacrolix/torrent v1.52.5
+## explicit; go 1.20
+github.com/anacrolix/torrent
+github.com/anacrolix/torrent/bencode
+github.com/anacrolix/torrent/common
+github.com/anacrolix/torrent/dialer
+github.com/anacrolix/torrent/internal/alloclim
+github.com/anacrolix/torrent/internal/check
+github.com/anacrolix/torrent/internal/limiter
+github.com/anacrolix/torrent/internal/nestedmaps
+github.com/anacrolix/torrent/internal/testutil
+github.com/anacrolix/torrent/iplist
+github.com/anacrolix/torrent/logonce
+github.com/anacrolix/torrent/metainfo
+github.com/anacrolix/torrent/mmap_span
+github.com/anacrolix/torrent/mse
+github.com/anacrolix/torrent/peer_protocol
+github.com/anacrolix/torrent/peer_protocol/ut-holepunch
+github.com/anacrolix/torrent/request-strategy
+github.com/anacrolix/torrent/segments
+github.com/anacrolix/torrent/smartban
+github.com/anacrolix/torrent/storage
+github.com/anacrolix/torrent/tracker
+github.com/anacrolix/torrent/tracker/http
+github.com/anacrolix/torrent/tracker/shared
+github.com/anacrolix/torrent/tracker/udp
+github.com/anacrolix/torrent/typed-roaring
+github.com/anacrolix/torrent/types
+github.com/anacrolix/torrent/types/infohash
+github.com/anacrolix/torrent/version
+github.com/anacrolix/torrent/webseed
+github.com/anacrolix/torrent/webtorrent
+# github.com/anacrolix/upnp v0.1.3-0.20220123035249-922794e51c96
+## explicit; go 1.12
+github.com/anacrolix/upnp
+# github.com/anacrolix/utp v0.2.0
+## explicit; go 1.20
+github.com/anacrolix/utp
+# github.com/andrew-d/go-termutil v0.0.0-20150726205930-009166a695a2
+## explicit
+github.com/andrew-d/go-termutil
+# github.com/andybalholm/cascadia v1.3.2
+## explicit; go 1.16
+github.com/andybalholm/cascadia
+# github.com/bahlo/generic-list-go v0.2.0
+## explicit; go 1.18
+github.com/bahlo/generic-list-go
+# github.com/benbjohnson/immutable v0.4.3
+## explicit; go 1.18
+github.com/benbjohnson/immutable
+# github.com/bits-and-blooms/bitset v1.8.0
+## explicit; go 1.16
+github.com/bits-and-blooms/bitset
+# github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8
+## explicit; go 1.11
+github.com/bradfitz/iter
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
+# github.com/dustin/go-humanize v1.0.1
+## explicit; go 1.16
+github.com/dustin/go-humanize
+# github.com/edsrzf/mmap-go v1.1.0
+## explicit; go 1.17
+github.com/edsrzf/mmap-go
+# github.com/elazarl/go-bindata-assetfs v1.0.1
+## explicit
+github.com/elazarl/go-bindata-assetfs
+# github.com/elithrar/simple-scrypt v1.3.0
+## explicit
+github.com/elithrar/simple-scrypt
+# github.com/floatdrop/lru v1.3.0
+## explicit; go 1.18
+github.com/floatdrop/lru
+# github.com/go-logr/logr v1.2.4
+## explicit; go 1.16
+github.com/go-logr/logr
+github.com/go-logr/logr/funcr
+# github.com/go-logr/stdr v1.2.2
+## explicit; go 1.16
+github.com/go-logr/stdr
+# github.com/go-ole/go-ole v1.3.0
+## explicit; go 1.12
+github.com/go-ole/go-ole
+github.com/go-ole/go-ole/oleutil
+# github.com/google/btree v1.1.2
+## explicit; go 1.18
+github.com/google/btree
+# github.com/google/uuid v1.3.1
+## explicit
+github.com/google/uuid
+# github.com/gorilla/websocket v1.5.0
+## explicit; go 1.12
+github.com/gorilla/websocket
+# github.com/hashicorp/errwrap v1.1.0
+## explicit
+github.com/hashicorp/errwrap
+# github.com/hashicorp/go-multierror v1.1.1
+## explicit; go 1.13
+github.com/hashicorp/go-multierror
+# github.com/huandu/xstrings v1.4.0
+## explicit; go 1.12
+github.com/huandu/xstrings
+# github.com/jpillora/ansi v1.0.3
+## explicit; go 1.13
+github.com/jpillora/ansi
+# github.com/jpillora/archive v0.0.0-20160301031048-e0b3681851f1
+## explicit
+github.com/jpillora/archive
+# github.com/jpillora/backoff v1.0.0
+## explicit; go 1.13
+github.com/jpillora/backoff
+# github.com/jpillora/cookieauth v1.1.1
+## explicit; go 1.19
+github.com/jpillora/cookieauth
+# github.com/jpillora/eventsource v1.1.0
+## explicit; go 1.13
+github.com/jpillora/eventsource
+# github.com/jpillora/opts v1.2.3
+## explicit; go 1.12
+github.com/jpillora/opts
+# github.com/jpillora/requestlog v1.0.0
+## explicit; go 1.13
+github.com/jpillora/requestlog
+# github.com/jpillora/scraper v0.2.4
+## explicit; go 1.13
+github.com/jpillora/scraper/scraper
+# github.com/jpillora/sizestr v1.0.0
+## explicit; go 1.13
+github.com/jpillora/sizestr
+# github.com/jpillora/velox v0.4.1
+## explicit; go 1.13
+github.com/jpillora/velox
+github.com/jpillora/velox/go
+# github.com/lispad/go-generics-tools v1.1.0
+## explicit; go 1.18
+github.com/lispad/go-generics-tools/binheap
+# github.com/mschoch/smat v0.2.0
+## explicit; go 1.13
+github.com/mschoch/smat
+# github.com/pion/datachannel v1.5.5
+## explicit; go 1.13
+github.com/pion/datachannel
+# github.com/pion/dtls/v2 v2.2.7
+## explicit; go 1.13
+github.com/pion/dtls/v2
+github.com/pion/dtls/v2/internal/ciphersuite
+github.com/pion/dtls/v2/internal/ciphersuite/types
+github.com/pion/dtls/v2/internal/closer
+github.com/pion/dtls/v2/internal/util
+github.com/pion/dtls/v2/pkg/crypto/ccm
+github.com/pion/dtls/v2/pkg/crypto/ciphersuite
+github.com/pion/dtls/v2/pkg/crypto/clientcertificate
+github.com/pion/dtls/v2/pkg/crypto/elliptic
+github.com/pion/dtls/v2/pkg/crypto/fingerprint
+github.com/pion/dtls/v2/pkg/crypto/hash
+github.com/pion/dtls/v2/pkg/crypto/prf
+github.com/pion/dtls/v2/pkg/crypto/signature
+github.com/pion/dtls/v2/pkg/crypto/signaturehash
+github.com/pion/dtls/v2/pkg/protocol
+github.com/pion/dtls/v2/pkg/protocol/alert
+github.com/pion/dtls/v2/pkg/protocol/extension
+github.com/pion/dtls/v2/pkg/protocol/handshake
+github.com/pion/dtls/v2/pkg/protocol/recordlayer
+# github.com/pion/ice/v3 v3.0.0
+## explicit; go 1.13
+github.com/pion/ice/v3
+github.com/pion/ice/v3/internal/atomic
+github.com/pion/ice/v3/internal/fakenet
+github.com/pion/ice/v3/internal/stun
+# github.com/pion/interceptor v0.1.18
+## explicit; go 1.15
+github.com/pion/interceptor
+github.com/pion/interceptor/internal/ntp
+github.com/pion/interceptor/pkg/nack
+github.com/pion/interceptor/pkg/report
+github.com/pion/interceptor/pkg/twcc
+# github.com/pion/logging v0.2.2
+## explicit; go 1.12
+github.com/pion/logging
+# github.com/pion/mdns v0.0.8
+## explicit; go 1.12
+github.com/pion/mdns
+# github.com/pion/randutil v0.1.0
+## explicit; go 1.14
+github.com/pion/randutil
+# github.com/pion/rtcp v1.2.10
+## explicit; go 1.13
+github.com/pion/rtcp
+# github.com/pion/rtp v1.8.1
+## explicit; go 1.19
+github.com/pion/rtp
+github.com/pion/rtp/codecs
+github.com/pion/rtp/pkg/obu
+# github.com/pion/sctp v1.8.8
+## explicit; go 1.13
+github.com/pion/sctp
+# github.com/pion/sdp/v3 v3.0.6
+## explicit; go 1.13
+github.com/pion/sdp/v3
+# github.com/pion/srtp/v3 v3.0.0
+## explicit; go 1.14
+github.com/pion/srtp/v3
+# github.com/pion/stun v0.6.1
+## explicit; go 1.12
+github.com/pion/stun
+github.com/pion/stun/internal/hmac
+# github.com/pion/transport/v2 v2.2.3
+## explicit; go 1.12
+github.com/pion/transport/v2
+github.com/pion/transport/v2/connctx
+github.com/pion/transport/v2/deadline
+github.com/pion/transport/v2/packetio
+github.com/pion/transport/v2/replaydetector
+github.com/pion/transport/v2/stdnet
+github.com/pion/transport/v2/udp
+github.com/pion/transport/v2/utils/xor
+# github.com/pion/transport/v3 v3.0.1
+## explicit; go 1.12
+github.com/pion/transport/v3
+github.com/pion/transport/v3/deadline
+github.com/pion/transport/v3/packetio
+github.com/pion/transport/v3/replaydetector
+github.com/pion/transport/v3/stdnet
+github.com/pion/transport/v3/utils/xor
+github.com/pion/transport/v3/vnet
+# github.com/pion/turn/v3 v3.0.0
+## explicit; go 1.13
+github.com/pion/turn/v3
+github.com/pion/turn/v3/internal/allocation
+github.com/pion/turn/v3/internal/client
+github.com/pion/turn/v3/internal/ipnet
+github.com/pion/turn/v3/internal/proto
+github.com/pion/turn/v3/internal/server
+# github.com/pion/webrtc/v3 v3.2.18
+## explicit; go 1.13
+github.com/pion/webrtc/v3
+github.com/pion/webrtc/v3/internal/fmtp
+github.com/pion/webrtc/v3/internal/mux
+github.com/pion/webrtc/v3/internal/util
+github.com/pion/webrtc/v3/pkg/media
+github.com/pion/webrtc/v3/pkg/rtcerr
+# github.com/pkg/errors v0.9.1
+## explicit
+github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+## explicit
+github.com/pmezard/go-difflib/difflib
+# github.com/posener/complete v1.2.3
+## explicit; go 1.13
+github.com/posener/complete
+github.com/posener/complete/cmd
+github.com/posener/complete/cmd/install
+# github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529
+## explicit; go 1.12
+github.com/rs/dnscache
+# github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46
+## explicit
+github.com/ryszard/goskiplist/skiplist
+# github.com/shirou/gopsutil v3.21.11+incompatible
+## explicit
+github.com/shirou/gopsutil/cpu
+github.com/shirou/gopsutil/disk
+github.com/shirou/gopsutil/internal/common
+github.com/shirou/gopsutil/mem
+# github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
+## explicit
+github.com/skratchdot/open-golang/open
+# github.com/spaolacci/murmur3 v1.1.0
+## explicit
+github.com/spaolacci/murmur3
+# github.com/stretchr/testify v1.8.4
+## explicit; go 1.20
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
+# github.com/tidwall/btree v1.6.0
+## explicit; go 1.19
+github.com/tidwall/btree
+# github.com/tklauser/go-sysconf v0.3.12
+## explicit; go 1.13
+github.com/tklauser/go-sysconf
+# github.com/tklauser/numcpus v0.6.1
+## explicit; go 1.13
+github.com/tklauser/numcpus
+# github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
+## explicit
+github.com/tomasen/realip
+# github.com/willf/bitset v1.1.11
+## explicit; go 1.14
+github.com/willf/bitset
+# github.com/willf/bloom v2.0.3+incompatible
+## explicit
+github.com/willf/bloom
+# github.com/yusufpapurcu/wmi v1.2.3
+## explicit; go 1.16
+github.com/yusufpapurcu/wmi
+# go.etcd.io/bbolt v1.3.7
+## explicit; go 1.17
+go.etcd.io/bbolt
+# go.opentelemetry.io/otel v1.17.0
+## explicit; go 1.19
+go.opentelemetry.io/otel
+go.opentelemetry.io/otel/attribute
+go.opentelemetry.io/otel/baggage
+go.opentelemetry.io/otel/codes
+go.opentelemetry.io/otel/internal
+go.opentelemetry.io/otel/internal/attribute
+go.opentelemetry.io/otel/internal/baggage
+go.opentelemetry.io/otel/internal/global
+go.opentelemetry.io/otel/propagation
+# go.opentelemetry.io/otel/metric v1.17.0
+## explicit; go 1.19
+go.opentelemetry.io/otel/metric
+go.opentelemetry.io/otel/metric/embedded
+# go.opentelemetry.io/otel/trace v1.17.0
+## explicit; go 1.19
+go.opentelemetry.io/otel/trace
+# golang.org/x/crypto v0.13.0
+## explicit; go 1.17
+golang.org/x/crypto/cryptobyte
+golang.org/x/crypto/cryptobyte/asn1
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
+golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/scrypt
+# golang.org/x/exp v0.0.0-20230905200255-921286631fa9
+## explicit; go 1.20
+golang.org/x/exp/constraints
+golang.org/x/exp/maps
+golang.org/x/exp/slices
+# golang.org/x/net v0.15.0
+## explicit; go 1.17
+golang.org/x/net/bpf
+golang.org/x/net/dns/dnsmessage
+golang.org/x/net/html
+golang.org/x/net/html/atom
+golang.org/x/net/internal/iana
+golang.org/x/net/internal/socket
+golang.org/x/net/internal/socks
+golang.org/x/net/ipv4
+golang.org/x/net/ipv6
+golang.org/x/net/proxy
+# golang.org/x/sync v0.3.0
+## explicit; go 1.17
+golang.org/x/sync/singleflight
+# golang.org/x/sys v0.12.0
+## explicit; go 1.17
+golang.org/x/sys/cpu
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/time v0.3.0
+## explicit
+golang.org/x/time/rate
+# gomodules.xyz/jsonpatch/v3 v3.0.1
+## explicit; go 1.12
+gomodules.xyz/jsonpatch/v3
+# gomodules.xyz/orderedmap v0.1.0
+## explicit; go 1.12
+gomodules.xyz/orderedmap
+# gopkg.in/yaml.v3 v3.0.1
+## explicit
+gopkg.in/yaml.v3

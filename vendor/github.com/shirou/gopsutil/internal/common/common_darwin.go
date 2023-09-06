@@ -3,16 +3,23 @@
 package common
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
-func DoSysctrl(mib string) ([]string, error) {
-	os.Setenv("LC_ALL", "C")
-	out, err := exec.Command("/usr/sbin/sysctl", "-n", mib).Output()
+func DoSysctrlWithContext(ctx context.Context, mib string) ([]string, error) {
+	sysctl, err := exec.LookPath("sysctl")
+	if err != nil {
+		return []string{}, err
+	}
+	cmd := exec.CommandContext(ctx, sysctl, "-n", mib)
+	cmd.Env = getSysctrlEnv(os.Environ())
+	out, err := cmd.Output()
 	if err != nil {
 		return []string{}, err
 	}
@@ -28,8 +35,8 @@ func CallSyscall(mib []int32) ([]byte, uint64, error) {
 
 	// get required buffer size
 	length := uint64(0)
-	_, _, err := syscall.Syscall6(
-		syscall.SYS___SYSCTL,
+	_, _, err := unix.Syscall6(
+		202, // unix.SYS___SYSCTL https://github.com/golang/sys/blob/76b94024e4b621e672466e8db3d7f084e7ddcad2/unix/zsysnum_darwin_amd64.go#L146
 		uintptr(unsafe.Pointer(&mib[0])),
 		uintptr(miblen),
 		0,
@@ -46,8 +53,8 @@ func CallSyscall(mib []int32) ([]byte, uint64, error) {
 	}
 	// get proc info itself
 	buf := make([]byte, length)
-	_, _, err = syscall.Syscall6(
-		syscall.SYS___SYSCTL,
+	_, _, err = unix.Syscall6(
+		202, // unix.SYS___SYSCTL https://github.com/golang/sys/blob/76b94024e4b621e672466e8db3d7f084e7ddcad2/unix/zsysnum_darwin_amd64.go#L146
 		uintptr(unsafe.Pointer(&mib[0])),
 		uintptr(miblen),
 		uintptr(unsafe.Pointer(&buf[0])),

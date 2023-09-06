@@ -3,99 +3,63 @@ package torrent
 import (
 	"crypto"
 	"expvar"
-	"time"
+
+	pp "github.com/anacrolix/torrent/peer_protocol"
 )
 
 const (
 	pieceHash        = crypto.SHA1
-	maxRequests      = 250    // Maximum pending requests we allow peers to send us.
 	defaultChunkSize = 0x4000 // 16KiB
 
-	// Updated occasionally to when there's been some changes to client
-	// behaviour in case other clients are assuming anything of us. See also
-	// `bep20`.
-	extendedHandshakeClientVersion = "go.torrent dev 20150624"
-	// Peer ID client identifier prefix. We'll update this occasionally to
-	// reflect changes to client behaviour that other clients may depend on.
-	// Also see `extendedHandshakeClientVersion`.
-	bep20 = "-GT0001-"
+	// Arbitrary maximum of "metadata_size" (see https://www.bittorrent.org/beps/bep_0009.html)
+	// libtorrent-rasterbar uses 4MiB at last check. TODO: Add links to values used by other
+	// implementations here. I saw 14143527 in the metainfo for
+	// 3597f16e239aeb8f8524a1a1c4e4725a0a96b470. Large values for legitimate torrents should be
+	// recorded here for consideration.
+	maxMetadataSize uint32 = 16 * 1024 * 1024
+)
 
-	nominalDialTimeout = time.Second * 30
-	minDialTimeout     = 5 * time.Second
-
-	// Justification for set bits follows.
-	//
-	// Extension protocol ([5]|=0x10):
-	// http://www.bittorrent.org/beps/bep_0010.html
-	//
-	// Fast Extension ([7]|=0x04):
-	// http://bittorrent.org/beps/bep_0006.html.
-	// Disabled until AllowedFast is implemented.
-	//
-	// DHT ([7]|=1):
-	// http://www.bittorrent.org/beps/bep_0005.html
-	defaultExtensionBytes = "\x00\x00\x00\x00\x00\x10\x00\x01"
-
-	defaultEstablishedConnsPerTorrent = 80
-	defaultHalfOpenConnsPerTorrent    = 80
-	torrentPeersHighWater             = 200
-	torrentPeersLowWater              = 50
-
-	// Limit how long handshake can take. This is to reduce the lingering
-	// impact of a few bad apples. 4s loses 1% of successful handshakes that
-	// are obtained with 60s timeout, and 5% of unsuccessful handshakes.
-	handshakesTimeout = 20 * time.Second
-
-	// These are our extended message IDs. Peers will use these values to
-	// select which extension a message is intended for.
+// These are our extended message IDs. Peers will use these values to
+// select which extension a message is intended for.
+const (
 	metadataExtendedId = iota + 1 // 0 is reserved for deleting keys
 	pexExtendedId
+	utHolepunchExtendedId
 )
+
+func defaultPeerExtensionBytes() PeerExtensionBits {
+	return pp.NewPeerExtensionBytes(pp.ExtensionBitDht, pp.ExtensionBitLtep, pp.ExtensionBitFast)
+}
+
+func init() {
+	torrent.Set("peers supporting extension", &peersSupportingExtension)
+	torrent.Set("chunks received", &chunksReceived)
+}
 
 // I could move a lot of these counters to their own file, but I suspect they
 // may be attached to a Client someday.
 var (
-	unwantedChunksReceived   = expvar.NewInt("chunksReceivedUnwanted")
-	unexpectedChunksReceived = expvar.NewInt("chunksReceivedUnexpected")
-	chunksReceived           = expvar.NewInt("chunksReceived")
-
-	peersAddedBySource = expvar.NewMap("peersAddedBySource")
-
-	uploadChunksPosted = expvar.NewInt("uploadChunksPosted")
-	unexpectedCancels  = expvar.NewInt("unexpectedCancels")
+	torrent                  = expvar.NewMap("torrent")
+	peersSupportingExtension expvar.Map
+	chunksReceived           expvar.Map
 
 	pieceHashedCorrect    = expvar.NewInt("pieceHashedCorrect")
 	pieceHashedNotCorrect = expvar.NewInt("pieceHashedNotCorrect")
 
-	unsuccessfulDials = expvar.NewInt("dialSuccessful")
-	successfulDials   = expvar.NewInt("dialUnsuccessful")
-
-	acceptUTP    = expvar.NewInt("acceptUTP")
-	acceptTCP    = expvar.NewInt("acceptTCP")
-	acceptReject = expvar.NewInt("acceptReject")
-
-	peerExtensions                    = expvar.NewMap("peerExtensions")
 	completedHandshakeConnectionFlags = expvar.NewMap("completedHandshakeConnectionFlags")
 	// Count of connections to peer with same client ID.
-	connsToSelf = expvar.NewInt("connsToSelf")
-	// Number of completed connections to a client we're already connected with.
-	duplicateClientConns       = expvar.NewInt("duplicateClientConns")
-	receivedKeepalives         = expvar.NewInt("receivedKeepalives")
-	supportedExtensionMessages = expvar.NewMap("supportedExtensionMessages")
-	postedKeepalives           = expvar.NewInt("postedKeepalives")
+	connsToSelf        = expvar.NewInt("connsToSelf")
+	receivedKeepalives = expvar.NewInt("receivedKeepalives")
 	// Requests received for pieces we don't have.
 	requestsReceivedForMissingPieces = expvar.NewInt("requestsReceivedForMissingPieces")
+	requestedChunkLengths            = expvar.NewMap("requestedChunkLengths")
 
 	messageTypesReceived = expvar.NewMap("messageTypesReceived")
-	messageTypesSent     = expvar.NewMap("messageTypesSent")
-	messageTypesPosted   = expvar.NewMap("messageTypesPosted")
 
 	// Track the effectiveness of Torrent.connPieceInclinationPool.
 	pieceInclinationsReused = expvar.NewInt("pieceInclinationsReused")
 	pieceInclinationsNew    = expvar.NewInt("pieceInclinationsNew")
 	pieceInclinationsPut    = expvar.NewInt("pieceInclinationsPut")
 
-	fillBufferSentCancels  = expvar.NewInt("fillBufferSentCancels")
-	fillBufferSentRequests = expvar.NewInt("fillBufferSentRequests")
-	numFillBuffers         = expvar.NewInt("numFillBuffers")
+	concurrentChunkWrites = expvar.NewInt("torrentConcurrentChunkWrites")
 )

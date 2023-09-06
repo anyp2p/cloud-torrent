@@ -1,6 +1,7 @@
 package dht
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
@@ -12,13 +13,13 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/anacrolix/dht/krpc"
 	"github.com/anacrolix/missinggo"
+	"github.com/anacrolix/missinggo/conntrack"
 	"github.com/anacrolix/torrent/bencode"
 	"github.com/anacrolix/torrent/iplist"
 	"github.com/anacrolix/torrent/logonce"
 	"github.com/anacrolix/torrent/metainfo"
-
-	"github.com/anacrolix/dht/krpc"
 )
 
 // A Server defines parameters for a DHT node server that is able to send
@@ -32,15 +33,15 @@ type Server struct {
 	id     int160
 	socket net.PacketConn
 
-	mu                    sync.Mutex
-	transactions          map[transactionKey]*Transaction
-	nextT                 uint64 // unique "t" field for outbound queries
-	table                 table
-	closed                missinggo.Event
-	ipBlockList           iplist.Ranger
-	tokenServer           tokenServer // Manages tokens we issue to our queriers.
-	numConfirmedAnnounces int
-	config                ServerConfig
+	mu           sync.RWMutex
+	transactions map[transactionKey]*Transaction
+	nextT        uint64 // unique "t" field for outbound queries
+	table        table
+	closed       missinggo.Event
+	ipBlockList  iplist.Ranger
+	tokenServer  tokenServer // Manages tokens we issue to our queriers.
+	config       ServerConfig
+	stats        ServerStats
 }
 
 func (s *Server) numGoodNodes() (num int) {
@@ -88,6 +89,7 @@ func (s *Server) WriteStatus(w io.Writer) {
 		})
 	}
 	tw.Flush()
+	fmt.Fprintln(w)
 }
 
 func (s *Server) numNodes() (num int) {
@@ -99,14 +101,14 @@ func (s *Server) numNodes() (num int) {
 }
 
 // Stats returns statistics for the server.
-func (s *Server) Stats() (ss ServerStats) {
+func (s *Server) Stats() ServerStats {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	ss := s.stats
 	ss.GoodNodes = s.numGoodNodes()
 	ss.Nodes = s.numNodes()
 	ss.OutstandingTransactions = len(s.transactions)
-	ss.ConfirmedAnnounces = s.numConfirmedAnnounces
-	return
+	return ss
 }
 
 // Addr returns the listen address for the server. Packets arriving to this address
@@ -119,8 +121,10 @@ func (s *Server) Addr() net.Addr {
 func NewServer(c *ServerConfig) (s *Server, err error) {
 	if c == nil {
 		c = &ServerConfig{
-			Conn:       mustListen(":0"),
-			NoSecurity: true,
+			Conn:               mustListen(":0"),
+			NoSecurity:         true,
+			StartingNodes:      GlobalBootstrapAddrs,
+			ConnectionTracking: conntrack.NewInstance(),
 		}
 	}
 	if missinggo.IsZeroValue(c.NodeId) {
@@ -141,6 +145,9 @@ func NewServer(c *ServerConfig) (s *Server, err error) {
 		table: table{
 			k: 8,
 		},
+	}
+	if s.config.ConnectionTracking == nil {
+		s.config.ConnectionTracking = conntrack.NewInstance()
 	}
 	rand.Read(s.tokenServer.secret)
 	s.socket = c.Conn
@@ -275,17 +282,56 @@ func (s *Server) ipBlocked(ip net.IP) (blocked bool) {
 func (s *Server) AddNode(ni krpc.NodeInfo) error {
 	id := int160FromByteArray(ni.ID)
 	if id.IsZero() {
-		return s.Ping(ni.Addr, nil)
+		return s.Ping(ni.Addr.UDP(), nil)
 	}
-	_, err := s.getNode(NewAddr(ni.Addr), int160FromByteArray(ni.ID), true)
+	_, err := s.getNode(NewAddr(ni.Addr.UDP()), int160FromByteArray(ni.ID), true)
 	return err
+}
+
+func wantsContain(ws []krpc.Want, w krpc.Want) bool {
+	for _, _w := range ws {
+		if _w == w {
+			return true
+		}
+	}
+	return false
+}
+
+func shouldReturnNodes(queryWants []krpc.Want, querySource net.IP) bool {
+	if len(queryWants) != 0 {
+		return wantsContain(queryWants, krpc.WantNodes)
+	}
+	return querySource.To4() != nil
+}
+
+func shouldReturnNodes6(queryWants []krpc.Want, querySource net.IP) bool {
+	if len(queryWants) != 0 {
+		return wantsContain(queryWants, krpc.WantNodes6)
+	}
+	return querySource.To4() == nil
+}
+
+func (s *Server) makeReturnNodes(target int160, filter func(krpc.NodeAddr) bool) []krpc.NodeInfo {
+	return s.closestGoodNodeInfos(8, target, filter)
+}
+
+func (s *Server) setReturnNodes(r *krpc.Return, queryMsg krpc.Msg, querySource Addr) {
+	target := int160FromByteArray(queryMsg.A.InfoHash)
+	if shouldReturnNodes(queryMsg.A.Want, querySource.UDPAddr().IP) {
+		r.Nodes = s.makeReturnNodes(target, func(na krpc.NodeAddr) bool { return na.IP.To4() != nil })
+	}
+	if shouldReturnNodes6(queryMsg.A.Want, querySource.UDPAddr().IP) {
+		r.Nodes6 = s.makeReturnNodes(target, func(krpc.NodeAddr) bool { return true })
+	}
 }
 
 // TODO: Probably should write error messages back to senders if something is
 // wrong.
 func (s *Server) handleQuery(source Addr, m krpc.Msg) {
-	if n, _ := s.getNode(source, int160FromByteArray(*m.SenderID()), !m.ReadOnly); n != nil {
-		n.lastGotQuery = time.Now()
+	if m.SenderID() != nil {
+		if n, _ := s.getNode(source, int160FromByteArray(*m.SenderID()), !m.ReadOnly); n != nil {
+			n.lastGotQuery = time.Now()
+		}
 	}
 	if s.config.OnQuery != nil {
 		propagate := s.config.OnQuery(&m, source.UDPAddr())
@@ -303,31 +349,22 @@ func (s *Server) handleQuery(source Addr, m krpc.Msg) {
 	case "ping":
 		s.reply(source, m.T, krpc.Return{})
 	case "get_peers":
-		if len(args.InfoHash) != 20 {
-			break
-		}
-		s.reply(source, m.T, krpc.Return{
-			Nodes: s.closestGoodNodeInfos(8, int160FromByteArray(args.InfoHash)),
-			Token: s.createToken(source),
-		})
-	case "find_node": // TODO: Extract common behaviour with get_peers.
-		if len(args.Target) != 20 {
-			log.Printf("bad DHT query: %v", m)
-			return
-		}
-		s.reply(source, m.T, krpc.Return{
-			Nodes: s.closestGoodNodeInfos(8, int160FromByteArray(args.Target)),
-		})
+		var r krpc.Return
+		// TODO: Return nodes.
+		s.setReturnNodes(&r, m, source)
+		r.Token = s.createToken(source)
+		s.reply(source, m.T, r)
+	case "find_node":
+		var r krpc.Return
+		s.setReturnNodes(&r, m, source)
+		s.reply(source, m.T, r)
 	case "announce_peer":
 		readAnnouncePeer.Add(1)
 		if !s.validToken(args.Token, source) {
-			readInvalidToken.Add(1)
+			expvars.Add("received announce_peer with invalid token", 1)
 			return
 		}
-		if len(args.InfoHash) != 20 {
-			readQueryBad.Add(1)
-			return
-		}
+		expvars.Add("received announce_peer with valid token", 1)
 		if h := s.config.OnAnnouncePeer; h != nil {
 			p := Peer{
 				IP:   source.UDPAddr().IP,
@@ -338,6 +375,7 @@ func (s *Server) handleQuery(source Addr, m krpc.Msg) {
 			}
 			go h(metainfo.Hash(args.InfoHash), p)
 		}
+		s.reply(source, m.T, krpc.Return{})
 	default:
 		s.sendError(source, m.T, krpc.ErrorMethodUnknown)
 	}
@@ -353,24 +391,26 @@ func (s *Server) sendError(addr Addr, t string, e krpc.Error) {
 	if err != nil {
 		panic(err)
 	}
-	err = s.writeToNode(b, addr)
+	_, err = s.writeToNode(b, addr)
 	if err != nil {
 		log.Printf("error replying to %s: %s", addr, err)
 	}
 }
 
 func (s *Server) reply(addr Addr, t string, r krpc.Return) {
+	expvars.Add("replied to peer", 1)
 	r.ID = s.id.AsByteArray()
 	m := krpc.Msg{
-		T: t,
-		Y: "r",
-		R: &r,
+		T:  t,
+		Y:  "r",
+		R:  &r,
+		IP: addr.KRPC(),
 	}
 	b, err := bencode.Marshal(m)
 	if err != nil {
 		panic(err)
 	}
-	err = s.writeToNode(b, addr)
+	_, err = s.writeToNode(b, addr)
 	if err != nil {
 		log.Printf("error replying to %s: %s", addr, err)
 	}
@@ -402,7 +442,6 @@ func (s *Server) getNode(addr Addr, id int160, tryAdd bool) (*node, error) {
 			}
 			return b.Len() >= s.table.k
 		}) {
-			// No room.
 			return nil, errors.New("no room in bucket")
 		}
 	}
@@ -435,7 +474,7 @@ func (s *Server) nodeErr(n *node) error {
 	return nil
 }
 
-func (s *Server) writeToNode(b []byte, node Addr) (err error) {
+func (s *Server) writeToNode(b []byte, node Addr) (wrote bool, err error) {
 	if list := s.ipBlockList; list != nil {
 		if r, ok := list.Lookup(missinggo.AddrIP(node.UDPAddr())); ok {
 			err = fmt.Errorf("write to %s blocked: %s", node, r.Description)
@@ -450,6 +489,7 @@ func (s *Server) writeToNode(b []byte, node Addr) (err error) {
 		err = fmt.Errorf("error writing %d bytes to %s: %s", len(b), node, err)
 		return
 	}
+	wrote = true
 	if n != len(b) {
 		err = io.ErrShortWrite
 		return
@@ -501,6 +541,14 @@ func (s *Server) validToken(token string, addr Addr) bool {
 	return s.tokenServer.ValidToken(token, addr)
 }
 
+func (s *Server) connTrackEntryForAddr(a Addr) conntrack.Entry {
+	return conntrack.Entry{
+		s.socket.LocalAddr().Network(),
+		s.socket.LocalAddr().String(),
+		a.String(),
+	}
+}
+
 func (s *Server) query(addr Addr, q string, a *krpc.MsgArgs, callback func(krpc.Msg, error)) error {
 	tid := s.nextTransactionID()
 	if a == nil {
@@ -530,7 +578,14 @@ func (s *Server) query(addr Addr, q string, a *krpc.MsgArgs, callback func(krpc.
 		remoteAddr: addr,
 		t:          tid,
 		querySender: func() error {
-			return s.writeToNode(b, addr)
+			cteh := s.config.ConnectionTracking.Wait(context.TODO(), s.connTrackEntryForAddr(addr), "send dht query", -1)
+			wrote, err := s.writeToNode(b, addr)
+			if wrote {
+				cteh.Done()
+			} else {
+				cteh.Forget()
+			}
+			return err
 		},
 		onResponse: func(m krpc.Msg) {
 			go callback(m, nil)
@@ -561,11 +616,7 @@ func (s *Server) query(addr Addr, q string, a *krpc.MsgArgs, callback func(krpc.
 			return defaultQueryResendDelay()
 		},
 	}
-	err = t.sendQuery()
-	if err != nil {
-		return err
-	}
-	// s.getNode(node, "").lastSentQuery = time.Now()
+	s.stats.OutboundQueriesAttempted++
 	t.mu.Lock()
 	t.startResendTimer()
 	t.mu.Unlock()
@@ -603,7 +654,7 @@ func (s *Server) announcePeer(node Addr, infoHash int160, port int, token string
 		}
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		s.numConfirmedAnnounces++
+		s.stats.SuccessfulOutboundAnnouncePeerQueries++
 	})
 }
 
@@ -612,15 +663,16 @@ func (s *Server) addResponseNodes(d krpc.Msg) {
 	if d.R == nil {
 		return
 	}
-	for _, cni := range d.R.Nodes {
-		s.getNode(NewAddr(cni.Addr), int160FromByteArray(cni.ID), true)
-	}
+	d.R.ForAllNodes(func(ni krpc.NodeInfo) {
+		s.getNode(NewAddr(ni.Addr.UDP()), int160FromByteArray(ni.ID), true)
+	})
 }
 
 // Sends a find_node query to addr. targetID is the node we're looking for.
 func (s *Server) findNode(addr Addr, targetID int160, callback func(krpc.Msg, error)) (err error) {
 	return s.query(addr, "find_node", &krpc.MsgArgs{
 		Target: targetID.AsByteArray(),
+		Want:   []krpc.Want{krpc.WantNodes, krpc.WantNodes6},
 	}, func(m krpc.Msg, err error) {
 		// Scrape peers from the response to put in the server's table before
 		// handing the response back to the caller.
@@ -638,9 +690,7 @@ type TraversalStats struct {
 
 // Populates the node table.
 func (s *Server) Bootstrap() (ts TraversalStats, err error) {
-	s.mu.Lock()
 	initialAddrs, err := s.traversalStartingAddrs()
-	s.mu.Unlock()
 	if err != nil {
 		return
 	}
@@ -663,9 +713,9 @@ func (s *Server) Bootstrap() (ts TraversalStats, err error) {
 			}
 			ts.NumResponses++
 			if r := m.R; r != nil {
-				for _, addr := range r.Nodes {
-					onAddr(NewAddr(addr.Addr))
-				}
+				r.ForAllNodes(func(ni krpc.NodeInfo) {
+					onAddr(NewAddr(ni.Addr.UDP()))
+				})
 			}
 		})
 	}
@@ -691,7 +741,7 @@ func (s *Server) Nodes() (nis []krpc.NodeInfo) {
 	defer s.mu.Unlock()
 	s.table.forNodes(func(n *node) bool {
 		nis = append(nis, krpc.NodeInfo{
-			Addr: n.addr.UDPAddr(),
+			Addr: n.addr.KRPC(),
 			ID:   n.id.AsByteArray(),
 		})
 		return true
@@ -710,12 +760,13 @@ func (s *Server) Close() {
 func (s *Server) getPeers(addr Addr, infoHash int160, callback func(krpc.Msg, error)) (err error) {
 	return s.query(addr, "get_peers", &krpc.MsgArgs{
 		InfoHash: infoHash.AsByteArray(),
+		Want:     []krpc.Want{krpc.WantNodes, krpc.WantNodes6},
 	}, func(m krpc.Msg, err error) {
 		go callback(m, err)
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		s.addResponseNodes(m)
-		if m.R != nil && m.R.Token != "" {
+		if m.R != nil && m.R.Token != "" && m.SenderID() != nil {
 			if n, _ := s.getNode(addr, int160FromByteArray(*m.SenderID()), false); n != nil {
 				n.announceToken = m.R.Token
 			}
@@ -723,8 +774,16 @@ func (s *Server) getPeers(addr Addr, infoHash int160, callback func(krpc.Msg, er
 	})
 }
 
-func (s *Server) closestGoodNodeInfos(k int, targetID int160) (ret []krpc.NodeInfo) {
-	for _, n := range s.closestNodes(k, targetID, func(n *node) bool { return n.IsGood() }) {
+func (s *Server) closestGoodNodeInfos(
+	k int,
+	targetID int160,
+	filter func(krpc.NodeAddr) bool,
+) (
+	ret []krpc.NodeInfo,
+) {
+	for _, n := range s.closestNodes(k, targetID, func(n *node) bool {
+		return n.IsGood() && filter(n.NodeInfo().Addr)
+	}) {
 		ret = append(ret, n.NodeInfo())
 	}
 	return
@@ -735,10 +794,12 @@ func (s *Server) closestNodes(k int, target int160, filter func(*node) bool) []*
 }
 
 func (s *Server) traversalStartingAddrs() (addrs []Addr, err error) {
+	s.mu.RLock()
 	s.table.forNodes(func(n *node) bool {
 		addrs = append(addrs, n.addr)
 		return true
 	})
+	s.mu.RUnlock()
 	if len(addrs) > 0 {
 		return
 	}
@@ -750,6 +811,19 @@ func (s *Server) traversalStartingAddrs() (addrs []Addr, err error) {
 	}
 	if len(addrs) == 0 {
 		err = errors.New("no initial nodes")
+	}
+	return
+}
+
+func (s *Server) AddNodesFromFile(fileName string) (added int, err error) {
+	ns, err := ReadNodesFromFile(fileName)
+	if err != nil {
+		return
+	}
+	for _, n := range ns {
+		if s.AddNode(n) == nil {
+			added++
+		}
 	}
 	return
 }

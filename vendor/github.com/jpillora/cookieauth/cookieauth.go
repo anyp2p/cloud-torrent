@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,7 +13,7 @@ import (
 	"time"
 
 	scrypt "github.com/elithrar/simple-scrypt"
-	lru "github.com/hashicorp/golang-lru"
+	lru "github.com/floatdrop/lru"
 )
 
 const (
@@ -21,17 +22,21 @@ const (
 	setCookieAfter = 24 * time.Hour
 )
 
-var params = scrypt.Params{N: 16384, R: 8, P: 1, SaltLen: 16, DKLen: 32}
+func newLRU() *lru.LRU[string, string] {
+	return lru.New[string, string](cacheSize)
+}
+
+var params = scrypt.Params{N: 16384, R: 16, P: 1, SaltLen: 16, DKLen: 32}
 
 func New() *CookieAuth {
-	l, _ := lru.New(cacheSize)
 	ca := &CookieAuth{
 		id:     "cookieauth",
 		expiry: fortnight,
 		path:   "/",
 		auth:   nil,
+		realm:  "",
 		logger: nil,
-		cache:  l,
+		cache:  newLRU(),
 		next:   nil,
 	}
 	return ca
@@ -41,16 +46,26 @@ type CookieAuth struct {
 	mut    sync.RWMutex
 	id     string
 	auth   []byte
+	realm  string
 	expiry time.Duration
 	path   string
 	logger *log.Logger
-	cache  *lru.Cache
+	cache  *lru.LRU[string, string]
 	next   http.Handler
 }
 
+// Wrap the provided handler with basic auth
 func Wrap(next http.Handler, user, pass string) http.Handler {
 	ca := New()
 	ca.SetUserPass(user, pass)
+	return ca.Wrap(next)
+}
+
+// WrapWithRealm the provided handler with basic auth in the given realm
+func WrapWithRealm(next http.Handler, user, pass, realm string) http.Handler {
+	ca := New()
+	ca.SetUserPass(user, pass)
+	ca.SetRealm(realm)
 	return ca.Wrap(next)
 }
 
@@ -59,8 +74,8 @@ func (ca *CookieAuth) Wrap(next http.Handler) http.Handler {
 	return ca
 }
 
-//SetNextHandler sets the next http.Handler to use in
-//this middle chain
+// SetNextHandler sets the next http.Handler to use in
+// this middle chain
 func (ca *CookieAuth) SetNextHandler(next http.Handler) *CookieAuth {
 	ca.mut.Lock()
 	ca.next = next
@@ -68,7 +83,7 @@ func (ca *CookieAuth) SetNextHandler(next http.Handler) *CookieAuth {
 	return ca
 }
 
-//SetUserPass sets the current username and password
+// SetUserPass sets the current username and password
 func (ca *CookieAuth) SetUserPass(user, pass string) *CookieAuth {
 	ca.mut.Lock()
 	if user == "" && pass == "" {
@@ -76,12 +91,21 @@ func (ca *CookieAuth) SetUserPass(user, pass string) *CookieAuth {
 	} else {
 		ca.auth = concat(user, pass)
 	}
-	ca.cache.Purge()
+	ca.cache = newLRU()
 	ca.mut.Unlock()
 	return ca
 }
 
-//SetExpiry defines the cookie expiration time
+// SetRealm sets the realm for the authentication response (default: "")
+func (ca *CookieAuth) SetRealm(realm string) *CookieAuth {
+	ca.mut.Lock()
+	ca.realm = strings.Replace(realm, `"`, ``, -1)
+	ca.cache = newLRU()
+	ca.mut.Unlock()
+	return ca
+}
+
+// SetExpiry defines the cookie expiration time
 func (ca *CookieAuth) SetExpiry(expiry time.Duration) *CookieAuth {
 	ca.mut.Lock()
 	ca.expiry = expiry
@@ -89,8 +113,8 @@ func (ca *CookieAuth) SetExpiry(expiry time.Duration) *CookieAuth {
 	return ca
 }
 
-//SetPath defines the cookie path. Set to
-//the empty string to use the request path.
+// SetPath defines the cookie path. Set to
+// the empty string to use the request path.
 func (ca *CookieAuth) SetPath(path string) *CookieAuth {
 	ca.mut.Lock()
 	ca.path = path
@@ -98,8 +122,8 @@ func (ca *CookieAuth) SetPath(path string) *CookieAuth {
 	return ca
 }
 
-//SetLogger sets the log.Logger used to
-//display actions
+// SetLogger sets the log.Logger used to
+// display actions
 func (ca *CookieAuth) SetLogger(l *log.Logger) *CookieAuth {
 	ca.mut.Lock()
 	ca.logger = l
@@ -107,8 +131,8 @@ func (ca *CookieAuth) SetLogger(l *log.Logger) *CookieAuth {
 	return ca
 }
 
-//SetID changes the cookie ID, defaults
-//to "cookieauth"
+// SetID changes the cookie ID, defaults
+// to "cookieauth"
 func (ca *CookieAuth) SetID(id string) *CookieAuth {
 	ca.mut.Lock()
 	ca.id = id
@@ -187,28 +211,28 @@ func (ca *CookieAuth) generateCookie(b64 string, expires time.Time) *http.Cookie
 
 func (ca *CookieAuth) authFailed(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{Name: ca.id, MaxAge: -1})
-	w.Header().Set("WWW-Authenticate", "Basic")
+	w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, ca.realm))
 	w.WriteHeader(http.StatusUnauthorized)
 	w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
 }
 
 func (ca *CookieAuth) authWithCreds(user, pass string) (string, error) {
 	//check password
-	if subtle.ConstantTimeCompare(ca.auth, concat(user, pass)) != 1 {
+	if subtle.ConstantTimeCompare(ca.getAuth(), concat(user, pass)) != 1 {
 		return "", errors.New("incorrect password")
 	}
 	//cached token?
-	if b64, ok := ca.cache.Get(string(ca.auth)); ok {
-		return b64.(string), nil
+	if b64 := ca.cache.Get(string(ca.getAuth())); b64 != nil && *b64 != "" {
+		return *b64, nil
 	}
 	//generate password hash
-	hash, err := scrypt.GenerateFromPassword(ca.auth, params)
+	hash, err := scrypt.GenerateFromPassword(ca.getAuth(), params)
 	if err != nil {
 		return "", errors.New("hash failed")
 	}
 	//encode base64
 	b64 := base64.StdEncoding.EncodeToString(hash)
-	ca.cache.Add(string(ca.auth), b64)
+	ca.cache.Set(string(ca.getAuth()), b64)
 	return b64, nil
 }
 
@@ -233,7 +257,7 @@ func (ca *CookieAuth) authWithCookie(c *http.Cookie) (*http.Cookie, error) {
 		c2 = ca.generateCookie(b64, expires)
 	}
 	//cached token?
-	if ca.cache.Contains(b64) {
+	if ca.cache.Peek(b64) != nil {
 		return c2, nil
 	}
 	//decode base64
@@ -246,7 +270,7 @@ func (ca *CookieAuth) authWithCookie(c *http.Cookie) (*http.Cookie, error) {
 		return nil, err
 	}
 	//cache result!
-	ca.cache.Add(b64, true)
+	ca.cache.Set(b64, "")
 	//success
 	return c2, nil
 }

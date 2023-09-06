@@ -1,3 +1,4 @@
+//go:build !go1.9
 // +build !go1.9
 
 package roaring
@@ -67,5 +68,5 @@ func countTrailingZeros(x uint64) int {
 		// below doesn't work for 0.
 		return 64
 	}
-	return int(deBruijn64Lookup[((x & -x)*(deBruijn64))>>58])
+	return int(deBruijn64Lookup[((x&-x)*(deBruijn64))>>58])
 }
