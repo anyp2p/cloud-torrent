@@ -24,7 +24,7 @@ type fsNode struct {
 }
 
 func (s *Server) listFiles() *fsNode {
-	rootDir := s.state.Config.DownloadDirectory
+	rootDir := s.GetConfig().DownloadDirectory
 	root := &fsNode{}
 	if info, err := os.Stat(rootDir); err == nil {
 		if err := list(rootDir, info, root, new(int)); err != nil {
@@ -38,7 +38,7 @@ func (s *Server) serveFiles(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/download/") {
 		url := strings.TrimPrefix(r.URL.Path, "/download/")
 		//dldir is absolute
-		dldir := s.state.Config.DownloadDirectory
+		dldir := s.GetConfig().DownloadDirectory
 		file := filepath.Join(dldir, url)
 		//only allow fetches/deletes inside the dl dir
 		if !strings.HasPrefix(file, dldir) || dldir == file {

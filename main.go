@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/anyp2p/cloud-torrent/server"
@@ -14,6 +15,7 @@ func main() {
 		Title:      "Cloud Torrent",
 		Port:       3000,
 		ConfigPath: "cloud-torrent.json",
+		//APIPrefix:  "/test",
 	}
 
 	o := opts.New(&s)
@@ -22,7 +24,7 @@ func main() {
 	o.SetLineWidth(96)
 	o.Parse()
 
-	if err := s.Run(VERSION); err != nil {
+	if err := s.Run(context.Background(), VERSION, true); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -14,7 +14,7 @@ import (
 
 // the Engine Cloud Torrent engine, backed by anacrolix/torrent
 type Engine struct {
-	mut      sync.Mutex
+	mut      sync.RWMutex
 	cacheDir string
 	client   *torrent.Client
 	config   Config
@@ -26,13 +26,24 @@ func New() *Engine {
 }
 
 func (e *Engine) Config() Config {
-	return e.config
+	e.mut.RLock()
+	config := e.config
+	e.mut.RUnlock()
+	return config
+}
+
+func (e *Engine) Client() *torrent.Client {
+	e.mut.RLock()
+	client := e.client
+	e.mut.RUnlock()
+	return client
 }
 
 func (e *Engine) Configure(c Config) error {
 	//recieve config
-	if e.client != nil {
-		e.client.Close()
+	client := e.Client()
+	if client != nil {
+		client.Close()
 		time.Sleep(1 * time.Second)
 	}
 	if c.IncomingPort <= 0 {
@@ -60,7 +71,7 @@ func (e *Engine) Configure(c Config) error {
 }
 
 func (e *Engine) NewMagnet(magnetURI string) error {
-	tt, err := e.client.AddMagnet(magnetURI)
+	tt, err := e.Client().AddMagnet(magnetURI)
 	if err != nil {
 		return err
 	}
@@ -68,7 +79,7 @@ func (e *Engine) NewMagnet(magnetURI string) error {
 }
 
 func (e *Engine) NewTorrent(spec *torrent.TorrentSpec) error {
-	tt, _, err := e.client.AddTorrentSpec(spec)
+	tt, _, err := e.Client().AddTorrentSpec(spec)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package server
 
 import (
 	"compress/gzip"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -36,6 +37,7 @@ type Server struct {
 	CertPath   string `help:"TLS Certicate file path" short:"r"`
 	Log        bool   `help:"Enable request logging"`
 	Open       bool   `help:"Open now with your default browser"`
+	APIPrefix  string
 	//http handlers
 	files, static http.Handler
 	scraper       *scraper.Handler
@@ -45,10 +47,12 @@ type Server struct {
 	state  struct {
 		velox.State
 		sync.Mutex
+		configMu        sync.RWMutex
 		Config          engine.Config
 		SearchProviders scraper.Config
 		Downloads       *fsNode
 		Torrents        map[string]*engine.Torrent
+		usersMu         sync.RWMutex
 		Users           map[string]string
 		Stats           struct {
 			Title   string
@@ -58,14 +62,13 @@ type Server struct {
 			System  stats
 		}
 	}
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // Run the server
-func (s *Server) Run(version string) error {
-	isTLS := s.CertPath != "" || s.KeyPath != "" //poor man's XOR
-	if isTLS && (s.CertPath == "" || s.KeyPath == "") {
-		return fmt.Errorf("You must provide both key and cert paths")
-	}
+func (s *Server) Run(ctx context.Context, version string, startServer bool) error {
+	s.ctx, s.cancel = context.WithCancel(ctx)
 	s.state.Stats.Title = s.Title
 	s.state.Stats.Version = version
 	s.state.Stats.Runtime = strings.TrimPrefix(runtime.Version(), "go")
@@ -115,24 +118,50 @@ func (s *Server) Run(version string) error {
 	}
 	//poll torrents and files
 	go func() {
+		t := time.NewTicker(1 * time.Second)
+		defer t.Stop()
 		for {
-			s.state.Lock()
-			s.state.Torrents = s.engine.GetTorrents()
-			s.state.Downloads = s.listFiles()
-			s.state.Unlock()
-			s.state.Push()
-			time.Sleep(1 * time.Second)
+			select {
+			case <-t.C:
+				s.state.Lock()
+				s.state.Torrents = s.engine.GetTorrents()
+				s.state.Downloads = s.listFiles()
+				s.state.Unlock()
+				s.state.Push()
+			case <-s.ctx.Done():
+				return
+			}
 		}
 	}()
 	//start collecting stats
 	go func() {
+		t := time.NewTicker(5 * time.Second)
+		defer t.Stop()
 		for {
-			c := s.engine.Config()
-			s.state.Stats.System.loadStats(c.DownloadDirectory)
-			time.Sleep(5 * time.Second)
+			select {
+			case <-t.C:
+				c := s.engine.Config()
+				s.state.Stats.System.loadStats(c.DownloadDirectory)
+			case <-s.ctx.Done():
+				return
+			}
 		}
 	}()
+	if startServer {
+		err := s.start()
+		if err != nil {
+			s.cancel()
+		}
+		return err
+	}
+	return nil
+}
 
+func (s *Server) start() error {
+	isTLS := s.CertPath != "" || s.KeyPath != "" //poor man's XOR
+	if isTLS && (s.CertPath == "" || s.KeyPath == "") {
+		return fmt.Errorf("You must provide both key and cert paths")
+	}
 	host := s.Host
 	if host == "" {
 		host = "0.0.0.0"
@@ -149,11 +178,14 @@ func (s *Server) Run(version string) error {
 		}
 		go func() {
 			time.Sleep(1 * time.Second)
-			open.Run(fmt.Sprintf("%s://%s:%d", proto, openhost, s.Port))
+			open.Run(fmt.Sprintf("%s://%s:%d%s", proto, openhost, s.Port, s.APIPrefix))
 		}()
 	}
 	//define handler chain, from last to first
 	h := http.Handler(http.HandlerFunc(s.handle))
+	if len(s.APIPrefix) > 0 {
+		h = http.StripPrefix(s.APIPrefix, h)
+	}
 	//gzip
 	compression := gzip.DefaultCompression
 	minSize := 0 //IMPORTANT
@@ -200,9 +232,22 @@ func (s *Server) reconfigure(c engine.Config) error {
 	}
 	b, _ := json.MarshalIndent(&c, "", "  ")
 	os.WriteFile(s.ConfigPath, b, 0755)
+	s.state.configMu.Lock()
 	s.state.Config = c
+	s.state.configMu.Unlock()
 	s.state.Push()
 	return nil
+}
+
+func (s *Server) GetConfig() engine.Config {
+	s.state.configMu.RLock()
+	cfg := s.state.Config
+	s.state.configMu.RUnlock()
+	return cfg
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.handle(w, r)
 }
 
 func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
@@ -218,10 +263,14 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 			log.Printf("sync failed: %s", err)
 			return
 		}
+		s.state.usersMu.Lock()
 		s.state.Users[conn.ID()] = r.RemoteAddr
+		s.state.usersMu.Unlock()
 		s.state.Push()
 		conn.Wait()
+		s.state.usersMu.Lock()
 		delete(s.state.Users, conn.ID())
+		s.state.usersMu.Unlock()
 		s.state.Push()
 		return
 	}
