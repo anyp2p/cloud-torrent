@@ -1,8 +1,3 @@
-# crawshaw.io/sqlite v0.3.3-0.20220618202545-d1964889ea3c
-## explicit; go 1.12
-crawshaw.io/sqlite
-crawshaw.io/sqlite/c
-crawshaw.io/sqlite/sqlitex
 # github.com/NYTimes/gziphandler v1.1.1
 ## explicit; go 1.11
 github.com/NYTimes/gziphandler
@@ -43,6 +38,7 @@ github.com/anacrolix/envpprof
 # github.com/anacrolix/generics v0.0.0-20230816105729-c755655aee45
 ## explicit; go 1.18
 github.com/anacrolix/generics
+github.com/anacrolix/generics/heap
 # github.com/anacrolix/go-libutp v1.3.1
 ## explicit; go 1.14
 github.com/anacrolix/go-libutp
@@ -85,7 +81,7 @@ github.com/anacrolix/stm/stmutil
 # github.com/anacrolix/sync v0.4.0
 ## explicit; go 1.13
 github.com/anacrolix/sync
-# github.com/anacrolix/torrent v1.52.5
+# github.com/anacrolix/torrent v1.52.6-0.20230905223714-732069b113b5
 ## explicit; go 1.20
 github.com/anacrolix/torrent
 github.com/anacrolix/torrent/bencode
@@ -159,6 +155,16 @@ github.com/elithrar/simple-scrypt
 # github.com/floatdrop/lru v1.3.0
 ## explicit; go 1.18
 github.com/floatdrop/lru
+# github.com/go-llsqlite/adapter v0.0.0-20230905083127-a7568332b3ac
+## explicit; go 1.18
+github.com/go-llsqlite/adapter
+github.com/go-llsqlite/adapter/sqlitex
+# github.com/go-llsqlite/crawshaw v0.0.0-20230904103556-219a9360a2c0
+## explicit; go 1.13
+github.com/go-llsqlite/crawshaw
+github.com/go-llsqlite/crawshaw/c
+github.com/go-llsqlite/crawshaw/fs
+github.com/go-llsqlite/crawshaw/sqlitex
 # github.com/go-logr/logr v1.2.4
 ## explicit; go 1.16
 github.com/go-logr/logr
@@ -219,9 +225,9 @@ github.com/jpillora/sizestr
 ## explicit; go 1.13
 github.com/jpillora/velox
 github.com/jpillora/velox/go
-# github.com/lispad/go-generics-tools v1.1.0
-## explicit; go 1.18
-github.com/lispad/go-generics-tools/binheap
+# github.com/mattn/go-isatty v0.0.16
+## explicit; go 1.15
+github.com/mattn/go-isatty
 # github.com/mschoch/smat v0.2.0
 ## explicit; go 1.13
 github.com/mschoch/smat
@@ -338,6 +344,9 @@ github.com/pmezard/go-difflib/difflib
 github.com/posener/complete
 github.com/posener/complete/cmd
 github.com/posener/complete/cmd/install
+# github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0
+## explicit; go 1.12
+github.com/remyoudompheng/bigfft
 # github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529
 ## explicit; go 1.12
 github.com/rs/dnscache
@@ -354,7 +363,7 @@ github.com/skratchdot/open-golang/open
 ## explicit; go 1.20
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/tidwall/btree v1.6.0
+# github.com/tidwall/btree v1.7.0
 ## explicit; go 1.19
 github.com/tidwall/btree
 # github.com/tklauser/go-sysconf v0.3.12
@@ -402,7 +411,6 @@ golang.org/x/crypto/scrypt
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/maps
-golang.org/x/exp/slices
 # golang.org/x/net v0.15.0
 ## explicit; go 1.17
 golang.org/x/net/bpf
@@ -436,3 +444,45 @@ gomodules.xyz/orderedmap
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# modernc.org/libc v1.21.5
+## explicit; go 1.17
+modernc.org/libc
+modernc.org/libc/errno
+modernc.org/libc/fcntl
+modernc.org/libc/fts
+modernc.org/libc/grp
+modernc.org/libc/honnef.co/go/netdb
+modernc.org/libc/langinfo
+modernc.org/libc/limits
+modernc.org/libc/netdb
+modernc.org/libc/netinet/in
+modernc.org/libc/poll
+modernc.org/libc/pthread
+modernc.org/libc/pwd
+modernc.org/libc/signal
+modernc.org/libc/stdio
+modernc.org/libc/stdlib
+modernc.org/libc/sys/socket
+modernc.org/libc/sys/stat
+modernc.org/libc/sys/types
+modernc.org/libc/termios
+modernc.org/libc/time
+modernc.org/libc/unistd
+modernc.org/libc/utime
+modernc.org/libc/uuid
+modernc.org/libc/uuid/uuid
+modernc.org/libc/wctype
+# modernc.org/mathutil v1.5.0
+## explicit; go 1.13
+modernc.org/mathutil
+# modernc.org/memory v1.4.0
+## explicit; go 1.18
+modernc.org/memory
+# modernc.org/sqlite v1.20.0
+## explicit; go 1.17
+modernc.org/sqlite/lib
+# zombiezen.com/go/sqlite v0.12.0
+## explicit; go 1.16
+zombiezen.com/go/sqlite
+zombiezen.com/go/sqlite/fs
+zombiezen.com/go/sqlite/sqlitex

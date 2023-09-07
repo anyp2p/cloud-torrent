@@ -4,7 +4,7 @@ go 1.21.0
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/anacrolix/torrent v1.52.5
+	github.com/anacrolix/torrent v1.52.6-0.20230905223714-732069b113b5
 	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/jpillora/archive v0.0.0-20160301031048-e0b3681851f1
 	github.com/jpillora/backoff v1.0.0
@@ -18,7 +18,6 @@ require (
 )
 
 require (
-	crawshaw.io/sqlite v0.3.3-0.20220618202545-d1964889ea3c // indirect
 	github.com/PuerkitoBio/goquery v1.8.1 // indirect
 	github.com/RoaringBitmap/roaring v1.5.0 // indirect
 	github.com/ajwerner/btree v0.0.0-20211221152037-f427b3e689c0 // indirect
@@ -49,6 +48,8 @@ require (
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/elithrar/simple-scrypt v1.3.0 // indirect
 	github.com/floatdrop/lru v1.3.0 // indirect
+	github.com/go-llsqlite/adapter v0.0.0-20230905083127-a7568332b3ac // indirect
+	github.com/go-llsqlite/crawshaw v0.0.0-20230904103556-219a9360a2c0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -61,7 +62,7 @@ require (
 	github.com/jpillora/ansi v1.0.3 // indirect
 	github.com/jpillora/eventsource v1.1.0 // indirect
 	github.com/jpillora/sizestr v1.0.0 // indirect
-	github.com/lispad/go-generics-tools v1.1.0 // indirect
+	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/pion/datachannel v1.5.5 // indirect
 	github.com/pion/dtls/v2 v2.2.7 // indirect
@@ -83,9 +84,10 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
-	github.com/tidwall/btree v1.6.0 // indirect
+	github.com/tidwall/btree v1.7.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce // indirect
@@ -103,4 +105,9 @@ require (
 	gomodules.xyz/jsonpatch/v3 v3.0.1 // indirect
 	gomodules.xyz/orderedmap v0.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	modernc.org/libc v1.21.5 // indirect
+	modernc.org/mathutil v1.5.0 // indirect
+	modernc.org/memory v1.4.0 // indirect
+	modernc.org/sqlite v1.20.0 // indirect
+	zombiezen.com/go/sqlite v0.12.0 // indirect
 )

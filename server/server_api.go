@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -22,7 +22,7 @@ func (s *Server) api(r *http.Request) error {
 
 	action := strings.TrimPrefix(r.URL.Path, "/api/")
 
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("Failed to download request body")
 	}
@@ -35,7 +35,7 @@ func (s *Server) api(r *http.Request) error {
 			return fmt.Errorf("Invalid remote torrent URL: %s (%s)", err, url)
 		}
 		//TODO enforce max body size (32k?)
-		data, err = ioutil.ReadAll(remote.Body)
+		data, err = io.ReadAll(remote.Body)
 		if err != nil {
 			return fmt.Errorf("Failed to download remote torrent: %s", err)
 		}

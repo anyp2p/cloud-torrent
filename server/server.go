@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -17,7 +16,7 @@ import (
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/anyp2p/cloud-torrent/engine"
-	"github.com/anyp2p/cloud-torrent/static"
+	ctstatic "github.com/anyp2p/cloud-torrent/static"
 	"github.com/jpillora/cookieauth"
 	"github.com/jpillora/requestlog"
 	"github.com/jpillora/scraper/scraper"
@@ -25,7 +24,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-//Server is the "State" portion of the diagram
+// Server is the "State" portion of the diagram
 type Server struct {
 	//config
 	Title      string `help:"Title of this instance" env:"TITLE"`
@@ -100,7 +99,7 @@ func (s *Server) Run(version string) error {
 		AutoStart:         true,
 	}
 	if _, err := os.Stat(s.ConfigPath); err == nil {
-		if b, err := ioutil.ReadFile(s.ConfigPath); err != nil {
+		if b, err := os.ReadFile(s.ConfigPath); err != nil {
 			return fmt.Errorf("Read configuration error: %s", err)
 		} else if len(b) == 0 {
 			//ignore empty file
@@ -200,7 +199,7 @@ func (s *Server) reconfigure(c engine.Config) error {
 		return err
 	}
 	b, _ := json.MarshalIndent(&c, "", "  ")
-	ioutil.WriteFile(s.ConfigPath, b, 0755)
+	os.WriteFile(s.ConfigPath, b, 0755)
 	s.state.Config = c
 	s.state.Push()
 	return nil
