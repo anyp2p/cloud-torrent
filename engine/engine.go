@@ -180,7 +180,10 @@ func (e *Engine) StopTorrent(infohash string) error {
 		return fmt.Errorf("Already stopped")
 	}
 	//there is no stop - kill underlying torrent
-	t.t.Drop()
+	_, ok := e.client.Torrent(t.t.InfoHash())
+	if ok {
+		t.t.Drop()
+	}
 	t.Started = false
 	for _, f := range t.Files {
 		if f != nil {
