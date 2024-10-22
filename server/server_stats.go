@@ -4,9 +4,9 @@ import (
 	"runtime"
 
 	velox "github.com/jpillora/velox/go"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/disk"
-	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 type stats struct {
@@ -19,28 +19,13 @@ type stats struct {
 	GoMemory    int64   `json:"goMemory"`
 	GoRoutines  int     `json:"goRoutines"`
 	//internal
-	lastCPUStat *cpu.TimesStat
-	pusher      velox.Pusher
+	pusher velox.Pusher
 }
 
 func (s *stats) loadStats(diskDir string) {
 	//count cpu cycles between last count
-	if stats, err := cpu.Times(false); err == nil {
-		stat := stats[0]
-		total := totalCPUTime(stat)
-		last := s.lastCPUStat
-		if last != nil {
-			lastTotal := totalCPUTime(*last)
-			if lastTotal != 0 {
-				totalDelta := total - lastTotal
-				if totalDelta > 0 {
-					idleDelta := (stat.Iowait + stat.Idle) - (last.Iowait + last.Idle)
-					usedDelta := (totalDelta - idleDelta)
-					s.CPU = 100 * usedDelta / totalDelta
-				}
-			}
-		}
-		s.lastCPUStat = &stat
+	if percents, err := cpu.Percent(0, false); err == nil && len(percents) == 1 {
+		s.CPU = percents[0]
 	}
 	//count disk usage
 	if stat, err := disk.Usage(diskDir); err == nil {
@@ -61,9 +46,4 @@ func (s *stats) loadStats(diskDir string) {
 	//done
 	s.Set = true
 	s.pusher.Push()
-}
-
-func totalCPUTime(t cpu.TimesStat) float64 {
-	total := t.User + t.System + t.Nice + t.Iowait + t.Irq + t.Softirq + t.Steal + t.Guest + t.GuestNice + t.Idle
-	return total
 }

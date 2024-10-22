@@ -49,15 +49,13 @@ func (e *Engine) Configure(c Config) error {
 	if c.IncomingPort <= 0 {
 		return fmt.Errorf("Invalid incoming port (%d)", c.IncomingPort)
 	}
-	tc := torrent.NewDefaultClientConfig()
-	tc.DataDir = c.DownloadDirectory
-	tc.ListenPort = c.IncomingPort
-	tc.NoUpload = !c.EnableUpload
-	tc.Seed = c.EnableSeeding
 
-	//tc.DisableEncryption = c.DisableEncryption
-
-	client, err := torrent.NewClient(tc)
+	config := torrent.NewDefaultClientConfig()
+	config.DataDir = c.DownloadDirectory
+	config.NoUpload = !c.EnableUpload
+	config.Seed = c.EnableSeeding
+	config.ListenPort = c.IncomingPort
+	client, err := torrent.NewClient(config)
 	if err != nil {
 		return err
 	}
@@ -90,9 +88,7 @@ func (e *Engine) newTorrent(tt *torrent.Torrent) error {
 	t := e.upsertTorrent(tt)
 	go func() {
 		<-t.t.GotInfo()
-		// if e.config.AutoStart && !loaded && torrent.Loaded && !torrent.Started {
 		e.StartTorrent(t.InfoHash)
-		// }
 	}()
 	return nil
 }
@@ -141,13 +137,6 @@ func (e *Engine) getOpenTorrent(infohash string) (*Torrent, error) {
 	if err != nil {
 		return nil, err
 	}
-	// if t.t == nil {
-	// 	newt, err := e.client.AddTorrentFromFile(filepath.Join(e.cacheDir, infohash+".torrent"))
-	// 	if err != nil {
-	// 		return t, fmt.Errorf("Failed to open torrent %s", err)
-	// 	}
-	// 	t.t = &newt
-	// }
 	return t, nil
 }
 
@@ -227,7 +216,6 @@ func (e *Engine) StartFile(infohash, filepath string) error {
 	}
 	t.Started = true
 	f.Started = true
-	f.f.Torrent().DownloadPieces(0, f.f.Torrent().NumPieces())
 	return nil
 }
 

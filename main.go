@@ -8,7 +8,7 @@ import (
 	"github.com/jpillora/opts"
 )
 
-var VERSION = "0.0.0-src" //set with ldflags
+var version = "0.0.0-src" //set with ldflags
 
 func main() {
 	s := server.Server{
@@ -19,12 +19,12 @@ func main() {
 	}
 
 	o := opts.New(&s)
-	o.Version(VERSION)
+	o.Version(version)
 	o.PkgRepo()
 	o.SetLineWidth(96)
 	o.Parse()
 
-	if err := s.Run(context.Background(), VERSION, true); err != nil {
+	if err := s.Run(context.Background(), version, true); err != nil {
 		log.Fatal(err)
 	}
 }
